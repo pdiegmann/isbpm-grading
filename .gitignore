@@ -9,6 +9,7 @@ wheels/
 # Virtual environments
 .venv
 
+import/
 docs/
 test_output.xlsx
 
