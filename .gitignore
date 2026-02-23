@@ -11,6 +11,6 @@ wheels/
 
 import/
 docs/
-test_output.xlsx
+*_output.xlsx
 
 .DS_Store
