@@ -66,8 +66,9 @@ def write_excel(output_path: str, students_df: pd.DataFrame, all_tasks: Dict[str
         master_sheet.set_column('B:C', 20)
         master_sheet.set_column('D:G', 18, percent_format)
         master_sheet.set_column('H:H', 15, grade_format)
+        master_sheet.set_column('I:I', 15)
         
-        headers = ['Username', 'First Name', 'Last Name', 'Formalities', 'Practical Tasks', 'Solution Report', 'Total Percentage', 'German Grade']
+        headers = ['Username', 'First Name', 'Last Name', 'Formalities', 'Practical Tasks', 'Solution Report', 'Total Percentage', 'German Grade', 'Link']
         for col_num, h in enumerate(headers):
             master_sheet.write(0, col_num, h, header_format)
             
@@ -107,6 +108,9 @@ def write_excel(output_path: str, students_df: pd.DataFrame, all_tasks: Dict[str
             
             row = 0
             ind_sheet.merge_range(row, 0, row, 7, f"Grading Report: {fname} {lname} ({username})", title_format)
+            
+            # Back link to Master View, off to the right (Column J)
+            ind_sheet.write_url(row, 9, "internal:'Master Overview'!A1", string="Back to Master View")
             row += 2
             
             pct_cells = {}
@@ -346,6 +350,7 @@ def write_excel(output_path: str, students_df: pd.DataFrame, all_tasks: Dict[str
             master_sheet.write_formula(master_row, 5, "=" + pct_cells['solution_report'], percent_format)
             master_sheet.write_formula(master_row, 6, f"='{sheet_name}'!E{tot_pct_row}", percent_format)
             master_sheet.write_formula(master_row, 7, f"='{sheet_name}'!E{grade_row}", grade_format)
+            master_sheet.write_url(master_row, 8, f"internal:'{sheet_name}'!A1", string="View Sheet")
             
             # -------------------------------------------------------------
             # Appendix: Raw Evaluation Text
