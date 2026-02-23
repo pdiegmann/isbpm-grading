@@ -1,6 +1,7 @@
 import pandas as pd
 from pathlib import Path
 from typing import Dict, Any, List, Optional
+from unidecode import unidecode
 
 def parse_students(filepath: str | Path) -> pd.DataFrame:
     """Parses the students CSV."""
@@ -29,14 +30,46 @@ def parse_grading_tasks(filepath: str | Path) -> pd.DataFrame:
             df[col] = pd.to_numeric(df[col], errors='coerce')
     return df
 
-def find_student_grading_files(base_dir: Path, username: str) -> Dict[str, Optional[Path]]:
-    """Tries to find the grading files for a specific student username."""
+def find_student_grading_files(base_dir: Path, username: str, firstname: str = "", lastname: str = "") -> Dict[str, Optional[Path]]:
+    """Tries to find the grading files for a specific student username or name."""
+    
+    # Standard format: {username}-...
     other_file = base_dir / f"{username}-other.csv"
     tasks_file = base_dir / f"{username}-tasks.csv"
+    text_file = base_dir / f"{username}.txt"
     
-    # In case there's a prefix, or they follow the example `example-grading-*`
-    # We will also support the direct username if that matches
+    if other_file.exists() or tasks_file.exists() or text_file.exists():
+        return {
+            'other': other_file if other_file.exists() else None,
+            'tasks': tasks_file if tasks_file.exists() else None,
+            'text': text_file if text_file.exists() else None
+        }
+        
+    # AI format: {LastName}-{FirstName}-...
+    if firstname and lastname:
+        # Some special character replacements might happen, so case-insensitive matching is safer
+        name_prefix = unidecode(f"{lastname}-{firstname}").lower()
+        
+        for file in base_dir.iterdir():
+            if not file.is_file():
+                continue
+                
+            fname_lower = unidecode(file.name).lower()
+            if fname_lower.startswith(name_prefix):
+                if fname_lower.endswith('-other.csv'):
+                    other_file = file
+                elif fname_lower.endswith('-tasks.csv'):
+                    tasks_file = file
+                elif fname_lower.endswith('.txt'):
+                    text_file = file
+                    
     return {
-        'other': other_file if other_file.exists() else None,
-        'tasks': tasks_file if tasks_file.exists() else None
+        'other': other_file if other_file.exists() and other_file.is_file() else None,
+        'tasks': tasks_file if tasks_file.exists() and tasks_file.is_file() else None,
+        'text': text_file if text_file.exists() and text_file.is_file() else None
     }
+
+def parse_grading_text(filepath: str | Path) -> str:
+    """Parses a text file and returns its content as a single string."""
+    with open(filepath, 'r', encoding='utf-8') as f:
+        return f.read()

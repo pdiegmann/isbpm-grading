@@ -24,8 +24,11 @@ def setup_grade_mapping_sheet(workbook, sheet_name='GradeMapping'):
     # mapping_sheet.hide() # Uncomment to hide this sheet in production
     return f"'{sheet_name}'!$A$1:$B$11"
 
-def write_excel(output_path: str, students_df: pd.DataFrame, all_tasks: Dict[str, pd.DataFrame], all_other: Dict[str, pd.DataFrame]):
+def write_excel(output_path: str, students_df: pd.DataFrame, all_tasks: Dict[str, pd.DataFrame], all_other: Dict[str, pd.DataFrame], all_texts: Dict[str, str] = None):
     """Generates the main Excel grading report using native Excel formulas with a polished layout."""
+    
+    if all_texts is None:
+        all_texts = {}
     
     with xlsxwriter.Workbook(output_path) as workbook:
         # Colors
@@ -343,6 +346,19 @@ def write_excel(output_path: str, students_df: pd.DataFrame, all_tasks: Dict[str
             master_sheet.write_formula(master_row, 5, "=" + pct_cells['solution_report'], percent_format)
             master_sheet.write_formula(master_row, 6, f"='{sheet_name}'!E{tot_pct_row}", percent_format)
             master_sheet.write_formula(master_row, 7, f"='{sheet_name}'!E{grade_row}", grade_format)
+            
+            # -------------------------------------------------------------
+            # Appendix: Raw Evaluation Text
+            # -------------------------------------------------------------
+            if all_texts and username in all_texts:
+                row += 3
+                ind_sheet.merge_range(row, 0, row, 7, "--- APPENDIX: Raw Evaluation Text ---", section_format)
+                row += 1
+                
+                raw_text = all_texts[username]
+                for text_line in raw_text.splitlines():
+                    ind_sheet.write_string(row, 0, text_line)
+                    row += 1
             
             master_row += 1
 
